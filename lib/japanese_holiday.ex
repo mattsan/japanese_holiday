@@ -1,6 +1,6 @@
-defmodule Holiday do
+defmodule JapaneseHoliday do
   @moduledoc """
-  Documentation for `Holiday`.
+  Documentation for `JapaneseHoliday`.
   """
 
   @doc """
@@ -8,7 +8,7 @@ defmodule Holiday do
 
   ## Examples
 
-      iex> Holiday.hello()
+      iex> JapaneseHoliday.hello()
       :world
 
   """
