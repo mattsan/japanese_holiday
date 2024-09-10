@@ -1,3 +1,3 @@
 import Config
 
-config :japanese_holiday, :api_req_options, plug: {Req.Test, JapaneseHoliday.API}
+config :japanese_holiday, :api_req_options, plug: {Req.Test, JapaneseHoliday.WebAPI}

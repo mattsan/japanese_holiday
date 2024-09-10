@@ -3,30 +3,47 @@ defmodule JapaneseHoliday.Storage do
   Storage of CVS data.
   """
 
-  alias JapaneseHoliday.API
+  alias JapaneseHoliday.WebAPI
 
-  @doc """
-  Load CSV data.
+  @spec load(Keyword.t()) :: {:ok, String.t()} | {:error, term()}
+  def load(opts) when is_list(opts) do
+    case parse_options(opts) do
+      {:ok, options} ->
+        if !options.force? && is_binary(options.path) && File.exists?(options.path) do
+          File.read(options.path)
+        else
+          WebAPI.download(options.url, options.encoding)
+          |> save(options.path, options.save?)
+        end
 
-  - `path` - Path of downloaded file.
-    If the file already exists, it doesn't download and return the content of the file.
-    If not exists, downloads the CSV data, save to the path andd return the data.
-  - `opts` - Options.
-      - `:force` - If it's `true` force download (default: `false`).
-      - `:save` - If it's `true` save the downloaded data to the path, if `false` not save (default: `true`).
-  """
-  @spec load(String.t(), Keyword.t()) :: {:ok, String.t()} | {:error, term()}
-  def load(path, opts \\ []) when is_binary(path) and is_list(opts) do
-    force? = Keyword.get(opts, :force, false)
-    save? = Keyword.get(opts, :save, true)
-
-    if !force? && File.exists?(path) do
-      File.read(path)
-    else
-      API.download()
-      |> save(path, save?)
+      error ->
+        error
     end
   end
+
+  @spec parse_options(Keyword.t()) :: {:ok, Map.t()} | {:error, term()}
+  defp parse_options(opts) do
+    url = opts[:url]
+    path = opts[:path]
+    save? = Keyword.get(opts, :save, false)
+    force? = Keyword.get(opts, :force, false)
+    encoding = Keyword.get(opts, :encoding, "utf-8")
+
+    cond do
+      !is_binary(url) ->
+        {:error, {:url_must_be_string, url}}
+
+      save? && !is_binary(path) ->
+        {:error, {:path_must_be_string_if_to_save, [save: save?, path: path]}}
+
+      true ->
+        {:ok, %{url: url, path: path, save?: save?, force?: force?, encoding: encoding}}
+    end
+  end
+
+  @spec save({:ok, String.t()} | {:error, term()}, String.t(), boolean()) ::
+          {:ok, String.t()} | {:error, term()}
+  defp save(resp, path, save?)
 
   defp save({:error, _} = resp, _, _) do
     resp

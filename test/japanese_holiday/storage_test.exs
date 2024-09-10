@@ -1,15 +1,16 @@
 defmodule JapaneseHoliday.StorageTest do
   use ExUnit.Case
 
-  alias JapaneseHoliday.{API, Storage}
+  alias JapaneseHoliday.{WebAPI, Storage}
 
   doctest Storage
 
   @moduletag :tmp_dir
   @csv_data "国民の祝日・休日月日,国民の祝日・休日名称\r\n2024/1/1,元日\r\n"
+  @url "https://www8.cao.go.jp/chosei/shukujitsu/syukujitsu.csv"
 
   defp respond_csv(context) do
-    Req.Test.stub(API, fn conn ->
+    Req.Test.stub(WebAPI, fn conn ->
       response = Map.get(context, :response, @csv_data)
 
       conn
@@ -37,7 +38,10 @@ defmodule JapaneseHoliday.StorageTest do
 
     test "ダウンロードした CSV データを返すこと、ファイルに保存すること", %{path: path} do
       refute File.exists?(path)
-      assert Storage.load(path) == {:ok, "国民の祝日・休日月日,国民の祝日・休日名称\r\n2024/1/1,元日\r\n"}
+
+      assert Storage.load(url: @url, path: path, encoding: "cp932", save: true) ==
+               {:ok, "国民の祝日・休日月日,国民の祝日・休日名称\r\n2024/1/1,元日\r\n"}
+
       assert File.read(path) == {:ok, "国民の祝日・休日月日,国民の祝日・休日名称\r\n2024/1/1,元日\r\n"}
     end
   end
@@ -47,7 +51,10 @@ defmodule JapaneseHoliday.StorageTest do
 
     test "ダウンロードした CSV データを返すこと、ファイルに保存しないこと", %{path: path} do
       refute File.exists?(path)
-      assert Storage.load(path, save: false) == {:ok, "国民の祝日・休日月日,国民の祝日・休日名称\r\n2024/1/1,元日\r\n"}
+
+      assert Storage.load(url: @url, path: path, encoding: "cp932", save: false) ==
+               {:ok, "国民の祝日・休日月日,国民の祝日・休日名称\r\n2024/1/1,元日\r\n"}
+
       refute File.exists?(path)
     end
   end
@@ -56,12 +63,14 @@ defmodule JapaneseHoliday.StorageTest do
     setup [:create_csv_file]
 
     test "CSV データをダウンロードせず、ファイルの内容を返すこと", %{path: path} do
-      Req.Test.stub(API, fn _ ->
+      Req.Test.stub(WebAPI, fn _ ->
         flunk("Unexpected download is occoured.")
       end)
 
       assert File.exists?(path)
-      assert Storage.load(path) == {:ok, "国民の祝日・休日月日,国民の祝日・休日名称\r\n2024/1/1,元日\r\n"}
+
+      assert Storage.load(url: @url, path: path, encoding: "cp932") ==
+               {:ok, "国民の祝日・休日月日,国民の祝日・休日名称\r\n2024/1/1,元日\r\n"}
     end
   end
 
@@ -72,7 +81,10 @@ defmodule JapaneseHoliday.StorageTest do
 
     test "CSV データがダウンロードされること、ファイルの内容がダウンロードされた内容に更新されること", %{path: path} do
       assert File.read(path) == {:ok, "国民の祝日・休日月日,国民の祝日・休日名称\r\n2024/1/1,元日\r\n"}
-      assert Storage.load(path, force: true) == {:ok, "date,name\r\n2024/1/1,元日\r\n"}
+
+      assert Storage.load(url: @url, path: path, encoding: "cp932", force: true, save: true) ==
+               {:ok, "date,name\r\n2024/1/1,元日\r\n"}
+
       assert File.read(path) == {:ok, "date,name\r\n2024/1/1,元日\r\n"}
     end
   end
