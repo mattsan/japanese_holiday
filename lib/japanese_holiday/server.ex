@@ -72,26 +72,45 @@ defmodule JapaneseHoliday.Server do
 
   @impl true
   def init(options) do
-    table = :ets.new(:holiday, [:ordered_set])
+    table = new_holidays_table()
 
     Process.send_after(self(), :init_table, 0)
 
-    {:ok, %{table: table, options: options}}
+    {:ok, %{table: table, options: options, loading: true, callers: []}}
   end
 
   @impl true
   def handle_info(:init_table, state) do
     {:ok, holidays} = JapaneseHoliday.load(state.options)
 
-    Enum.each(holidays, &:ets.insert(state.table, &1))
+    Enum.each(holidays, &insert_holiday(state.table, &1))
 
-    {:noreply, state}
+    state.callers
+    |> Enum.each(fn {from, year, month, day} ->
+      GenServer.reply(from, lookup_holidays(state.table, year, month, day))
+    end)
+
+    {:noreply, %{state | loading: false, callers: []}}
   end
 
   @impl true
-  def handle_call({:lookup, year, month, day}, _from, state) do
-    holidays = :ets.select(state.table, [{{{year, month, day}, :_}, [], [:"$_"]}])
+  def handle_call({:lookup, year, month, day}, from, state) do
+    if state.loading do
+      {:noreply, update_in(state, [:callers], &[{from, year, month, day} | &1])}
+    else
+      {:reply, lookup_holidays(state.table, year, month, day), state}
+    end
+  end
 
-    {:reply, holidays, state}
+  def new_holidays_table do
+    :ets.new(:holiday, [:ordered_set])
+  end
+
+  def insert_holiday(table, holiday) do
+    :ets.insert(table, holiday)
+  end
+
+  def lookup_holidays(table, year, month, day) do
+    :ets.select(table, [{{{year, month, day}, :_}, [], [:"$_"]}])
   end
 end
