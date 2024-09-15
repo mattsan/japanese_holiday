@@ -5,7 +5,12 @@ defmodule JapaneseHoliday.Storage do
 
   alias JapaneseHoliday.WebAPI
 
-  @spec load(Keyword.t()) :: {:ok, String.t()} | {:error, term()}
+  @doc """
+  Loads CSV data.
+
+  See `JapaneseHoliday.load/1`.
+  """
+  @spec load(Keyword.t()) :: {:ok, String.t()} | {:error, JapaneseHoliday.error()}
   def load(opts) when is_list(opts) do
     case parse_options(opts) do
       {:ok, options} ->
@@ -21,7 +26,7 @@ defmodule JapaneseHoliday.Storage do
     end
   end
 
-  @spec parse_options(Keyword.t()) :: {:ok, Map.t()} | {:error, term()}
+  @spec parse_options(Keyword.t()) :: {:ok, map()} | {:error, JapaneseHoliday.option_error()}
   defp parse_options(opts) do
     url = opts[:url]
     path = opts[:path]
