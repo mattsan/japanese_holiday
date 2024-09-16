@@ -4,6 +4,7 @@ defmodule JapaneseHoliday.Storage do
   """
 
   alias JapaneseHoliday.WebAPI
+  require Logger
 
   @doc """
   Loads CSV data.
@@ -15,8 +16,11 @@ defmodule JapaneseHoliday.Storage do
     case parse_options(opts) do
       {:ok, options} ->
         if !options.force? && is_binary(options.path) && File.exists?(options.path) do
+          register_log(:loading, options.path)
           File.read(options.path)
         else
+          register_log(:downloading, options.url)
+
           WebAPI.download(options.url, options.encoding)
           |> save(options.path, options.save?)
         end
@@ -60,8 +64,12 @@ defmodule JapaneseHoliday.Storage do
 
   defp save({:ok, body}, path, true) do
     case mkdir(path) do
-      :ok -> write(body, path)
-      error -> error
+      :ok ->
+        register_log(:saving, path)
+        write(body, path)
+
+      error ->
+        error
     end
   end
 
@@ -81,4 +89,13 @@ defmodule JapaneseHoliday.Storage do
       error -> error
     end
   end
+
+  defp register_log(:loading, path),
+    do: Logger.debug("JapaneseHoliday: loading CSV file from #{path}")
+
+  defp register_log(:saving, path),
+    do: Logger.debug("JapaneseHoliday: saving CSV file to #{path}")
+
+  defp register_log(:downloading, url),
+    do: Logger.debug("JapaneseHoliday: downloading CSV data from #{url}")
 end
