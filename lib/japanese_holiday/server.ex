@@ -13,7 +13,7 @@ defmodule JapaneseHoliday.Server do
   ```
 
   ```elixir
-  JapaneseHoliday.Server.start_link([force: true, save: false], [name: :holidays])
+  JapaneseHoliday.Server.start_link(force: true, save: false, name: :holidays)
   JapaneseHoliday.Server.lookup(:holidays, 2023, 1, 1)
   #=> [{{2023, 1, 1}, "元日"}]
   ```
@@ -26,11 +26,11 @@ defmodule JapaneseHoliday.Server do
 
   ## Options
 
-  - `opts` - `JapaneseHoliday.load/1` options
-  - `gs_opts` - GenServer's starting options. See `GenServer.start_link/3`
+  - `options` - `JapaneseHoliday.load/1` options or `GenServer.start_link/3` options.
   """
-  @spec start_link(Keyword.t(), Keyword.t()) :: {:ok, pid()}
-  def start_link(opts \\ [], gs_opts \\ []) when is_list(opts) do
+  @spec start_link(Keyword.t()) :: {:ok, pid()}
+  def start_link(options \\ []) when is_list(options) do
+    {opts, gs_opts} = Keyword.split(options, [:url, :save, :path, :force, :encoding])
     GenServer.start_link(__MODULE__, opts, gs_opts)
   end
 
