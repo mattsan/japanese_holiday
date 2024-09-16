@@ -1,4 +1,6 @@
 defmodule JapaneseHolidayStab do
+  @moduledoc false
+
   def setup(context) do
     status = Map.get(context, :status, 200)
     response = Map.fetch!(context, :response)
