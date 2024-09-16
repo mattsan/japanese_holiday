@@ -1,15 +1,12 @@
 defmodule JapaneseHolidayTest do
   use ExUnit.Case
+  use JapaneseHolidayStab
   doctest JapaneseHoliday
 
   @fixture_file "test/fixtures/holidays.csv"
 
-  @moduletag response: :iconv.convert("utf-8", "cp932", File.read!(Path.expand(@fixture_file)))
-
-  setup {JapaneseHolidayStab, :setup}
-
   setup_all do
-    {:ok, holidays} = JapaneseHoliday.load(path: @fixture_file, save: false)
+    {:ok, holidays} = JapaneseHoliday.load(path: @fixture_file)
 
     [holidays: holidays]
   end

@@ -1,60 +1,58 @@
 defmodule JapaneseHoliday.StorageTest do
   use ExUnit.Case
-
+  use JapaneseHolidayStab
   alias JapaneseHoliday.{WebAPI, Storage}
-
   doctest Storage
 
+  @url "https://example.com/syukujitsu.csv"
+
   @moduletag :tmp_dir
-  @csv_data "国民の祝日・休日月日,国民の祝日・休日名称\r\n2024/1/1,元日\r\n"
-  @url "https://www8.cao.go.jp/chosei/shukujitsu/syukujitsu.csv"
-
-  defp respond_csv(context) do
-    Req.Test.stub(WebAPI, fn conn ->
-      response = Map.get(context, :response, @csv_data)
-
-      conn
-      |> Plug.Conn.put_status(200)
-      |> Req.Test.text(:iconv.convert("utf-8", "cp932", response))
-    end)
-  end
+  @moduletag csv_data: "国民の祝日・休日月日,国民の祝日・休日名称\r\n2024/1/1,元日\r\n"
 
   defp create_csv_file(context) do
-    File.write(context.path, @csv_data)
+    File.write(context.path, context.csv_data)
   end
 
   defp on_exit_remove_file(context) do
     on_exit(fn -> File.rm!(context.path) end)
   end
 
-  setup(context) do
-    path = Path.join(context.tmp_dir, "holiday.csv")
+  setup_all(context) do
+    [response: :iconv.convert("utf-8", "cp932", context.csv_data)]
+  end
 
-    [path: path]
+  setup(context) do
+    [path: Path.join(context.tmp_dir, "holiday.csv")]
   end
 
   describe "load/1" do
-    setup [:respond_csv, :on_exit_remove_file]
+    setup [:on_exit_remove_file]
 
     test "ダウンロードした CSV データを返すこと、ファイルに保存すること", %{path: path} do
+      options = [
+        url: @url,
+        path: path,
+        encoding: "cp932",
+        save: true
+      ]
+
       refute File.exists?(path)
-
-      assert Storage.load(url: @url, path: path, encoding: "cp932", save: true) ==
-               {:ok, "国民の祝日・休日月日,国民の祝日・休日名称\r\n2024/1/1,元日\r\n"}
-
+      assert Storage.load(options) == {:ok, "国民の祝日・休日月日,国民の祝日・休日名称\r\n2024/1/1,元日\r\n"}
       assert File.read(path) == {:ok, "国民の祝日・休日月日,国民の祝日・休日名称\r\n2024/1/1,元日\r\n"}
     end
   end
 
   describe "load/2 save: false が設定された場合" do
-    setup [:respond_csv]
-
     test "ダウンロードした CSV データを返すこと、ファイルに保存しないこと", %{path: path} do
+      options = [
+        url: @url,
+        path: path,
+        encoding: "cp932",
+        save: false
+      ]
+
       refute File.exists?(path)
-
-      assert Storage.load(url: @url, path: path, encoding: "cp932", save: false) ==
-               {:ok, "国民の祝日・休日月日,国民の祝日・休日名称\r\n2024/1/1,元日\r\n"}
-
+      assert Storage.load(options) == {:ok, "国民の祝日・休日月日,国民の祝日・休日名称\r\n2024/1/1,元日\r\n"}
       refute File.exists?(path)
     end
   end
@@ -63,28 +61,33 @@ defmodule JapaneseHoliday.StorageTest do
     setup [:create_csv_file]
 
     test "CSV データをダウンロードせず、ファイルの内容を返すこと", %{path: path} do
-      Req.Test.stub(WebAPI, fn _ ->
-        flunk("Unexpected download is occoured.")
-      end)
+      options = [
+        url: @url,
+        path: path,
+        encoding: "cp932"
+      ]
 
+      Req.Test.stub(WebAPI, fn _ -> flunk("Unexpected download is occoured.") end)
       assert File.exists?(path)
-
-      assert Storage.load(url: @url, path: path, encoding: "cp932") ==
-               {:ok, "国民の祝日・休日月日,国民の祝日・休日名称\r\n2024/1/1,元日\r\n"}
+      assert Storage.load(options) == {:ok, "国民の祝日・休日月日,国民の祝日・休日名称\r\n2024/1/1,元日\r\n"}
     end
   end
 
   describe "load/2 保存したファイルが存在する場合 force: true が指定された場合" do
-    setup [:create_csv_file, :respond_csv]
+    setup [:create_csv_file]
 
-    @tag response: "date,name\r\n2024/1/1,元日\r\n"
-
+    @tag response: :iconv.convert("utf-8", "cp932", "date,name\r\n2024/1/1,元日\r\n")
     test "CSV データがダウンロードされること、ファイルの内容がダウンロードされた内容に更新されること", %{path: path} do
+      options = [
+        url: @url,
+        path: path,
+        encoding: "cp932",
+        force: true,
+        save: true
+      ]
+
       assert File.read(path) == {:ok, "国民の祝日・休日月日,国民の祝日・休日名称\r\n2024/1/1,元日\r\n"}
-
-      assert Storage.load(url: @url, path: path, encoding: "cp932", force: true, save: true) ==
-               {:ok, "date,name\r\n2024/1/1,元日\r\n"}
-
+      assert Storage.load(options) == {:ok, "date,name\r\n2024/1/1,元日\r\n"}
       assert File.read(path) == {:ok, "date,name\r\n2024/1/1,元日\r\n"}
     end
   end

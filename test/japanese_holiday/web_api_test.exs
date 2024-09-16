@@ -1,13 +1,12 @@
 defmodule JapaneseHoliday.WebAPITest do
   use ExUnit.Case
+  use JapaneseHolidayStab
 
   alias JapaneseHoliday.WebAPI
 
   @dummy_url "https://example.com/syukujitsu.csv"
 
   doctest WebAPI
-
-  setup {JapaneseHolidayStab, :setup}
 
   describe "success" do
     @tag response: :iconv.convert("utf-8", "cp932", "国民の祝日・休日月日,国民の祝日・休日名称\r\n2024/1/1,元日\r\n")

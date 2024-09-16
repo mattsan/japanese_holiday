@@ -1,14 +1,12 @@
 defmodule JapaneseHoliday.ServerTest do
   use ExUnit.Case
-
   alias JapaneseHoliday.Server
-
   doctest Server
 
   @fixture_file "test/fixtures/holidays.csv"
 
   setup do
-    {:ok, pid} = start_supervised({Server, [path: @fixture_file, save: false]})
+    {:ok, pid} = start_supervised({Server, [path: @fixture_file]})
 
     [pid: pid]
   end
