@@ -24,7 +24,7 @@ defmodule JapaneseHoliday.WebAPI do
   @spec download(String.t(), String.t()) :: {:ok, String.t()} | {:error, error()}
   def download(url, encoding) when is_binary(url) do
     [url: url]
-    |> Keyword.merge(Application.get_env(:japanese_holiday, :api_req_options, []))
+    |> merge_api_req_options()
     |> Req.request(decode_body: false)
     |> case do
       {:ok, %{status: status, body: body}} when is_success(status) ->
@@ -41,8 +41,16 @@ defmodule JapaneseHoliday.WebAPI do
   @spec encode_from(String.t(), String.t()) :: String.t()
   defp encode_from(string, encoding) do
     case encoding do
-      "utf-8" -> string
-      _ -> :iconv.convert(encoding, "utf-8", string)
+      "utf-8" ->
+        string
+
+      _ ->
+        :iconv.convert(encoding, "utf-8", string)
     end
+  end
+
+  @spec merge_api_req_options(Keyword.t()) :: Keyword.t()
+  defp merge_api_req_options(options) do
+    Keyword.merge(options, Application.get_env(:japanese_holiday, :api_req_options, []))
   end
 end

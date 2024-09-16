@@ -182,11 +182,12 @@ defmodule JapaneseHoliday do
     nil
   end
 
+  @date_regexp ~r/(?<year>\d{4})\/(?<month>\d{1,2})\/(?<day>\d{1,2})/
   @spec capture_date(String.t()) :: :calendar.date() | nil
   defp capture_date(date) do
     import String, only: [to_integer: 1]
 
-    case Regex.named_captures(~r/(?<year>\d{4})\/(?<month>\d{1,2})\/(?<day>\d{1,2})/, date) do
+    case Regex.named_captures(@date_regexp, date) do
       %{"year" => year, "month" => month, "day" => day} ->
         {to_integer(year), to_integer(month), to_integer(day)}
 
