@@ -15,6 +15,9 @@ jobs:
     name: Build and test
     runs-on: ubuntu-latest
 
+    env:
+      ImageOS: ubuntu22
+
     steps:
     - uses: actions/checkout@v4
     - name: Set up Elixir
