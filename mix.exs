@@ -37,7 +37,10 @@ defmodule JapaneseHoliday.MixProject do
   defp docs do
     [
       main: "readme",
-      extras: ["README.md"]
+      extras: ["README.md"],
+      groups_for_docs: [
+        Guards: &(&1[:guard] == true)
+      ]
     ]
   end
 end

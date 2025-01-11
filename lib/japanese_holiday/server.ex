@@ -21,6 +21,8 @@ defmodule JapaneseHoliday.Server do
 
   use GenServer
 
+  import JapaneseHoliday, only: [is_year: 1, is_month: 1, is_day: 1]
+
   @doc """
   Starts a holiday server.
 
@@ -40,7 +42,7 @@ defmodule JapaneseHoliday.Server do
   See `JapaneseHoliday.lookup/2`.
   """
   @spec lookup(pid(), JapaneseHoliday.year()) :: [JapaneseHoliday.holiday()]
-  def lookup(pid, year) do
+  def lookup(pid, year) when is_year(year) do
     GenServer.call(pid, {:lookup, year, :_, :_})
   end
 
@@ -53,7 +55,7 @@ defmodule JapaneseHoliday.Server do
   """
   @spec lookup(pid(), JapaneseHoliday.year(), JapaneseHoliday.month()) ::
           [JapaneseHoliday.holiday()]
-  def lookup(pid, year, month) do
+  def lookup(pid, year, month) when is_year(year) and is_month(month) do
     GenServer.call(pid, {:lookup, year, month, :_})
   end
 
@@ -66,7 +68,7 @@ defmodule JapaneseHoliday.Server do
   """
   @spec lookup(pid(), JapaneseHoliday.year(), JapaneseHoliday.month(), JapaneseHoliday.day()) ::
           [JapaneseHoliday.holiday()]
-  def lookup(pid, year, month, day) do
+  def lookup(pid, year, month, day) when is_year(year) and is_month(month) and is_day(day) do
     GenServer.call(pid, {:lookup, year, month, day})
   end
 

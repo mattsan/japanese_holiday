@@ -37,9 +37,9 @@ defmodule JapaneseHoliday do
   @type file_error() :: File.posix()
   @type error() :: option_error() | file_error() | WebAPI.error()
 
-  defguardp is_year(year) when year in 1955..9999
-  defguardp is_month(month) when month in 1..12
-  defguardp is_day(day) when day in 1..31
+  defguard is_year(term) when term in 1955..9999
+  defguard is_month(term) when term in 1..12
+  defguard is_day(term) when term in 1..31
 
   @doc """
   Loads public holidays in Japan.

@@ -11,6 +11,38 @@ defmodule JapaneseHolidayTest do
     [holidays: holidays]
   end
 
+  describe "guards" do
+    test "is_year/1" do
+      assert JapaneseHoliday.is_year(1955)
+      assert JapaneseHoliday.is_year(9999)
+
+      refute JapaneseHoliday.is_year(1954)
+      refute JapaneseHoliday.is_year(10000)
+      refute JapaneseHoliday.is_year("2024")
+      refute JapaneseHoliday.is_year(:twenty_twenty_four)
+    end
+
+    test "is_month/1" do
+      assert JapaneseHoliday.is_month(1)
+      assert JapaneseHoliday.is_month(12)
+
+      refute JapaneseHoliday.is_month(0)
+      refute JapaneseHoliday.is_month(13)
+      refute JapaneseHoliday.is_month("1")
+      refute JapaneseHoliday.is_month(:Jan)
+    end
+
+    test "is_day/1" do
+      assert JapaneseHoliday.is_day(1)
+      assert JapaneseHoliday.is_day(31)
+
+      refute JapaneseHoliday.is_day(0)
+      refute JapaneseHoliday.is_day(32)
+      refute JapaneseHoliday.is_day("1")
+      refute JapaneseHoliday.is_day(:christmas_day)
+    end
+  end
+
   describe "lookup/2" do
     test "指定した年のすべての祝日を返すこと", %{holidays: holidays} do
       expected = [
