@@ -23,6 +23,8 @@ defmodule JapaneseHoliday.Server do
 
   import JapaneseHoliday, only: [is_year: 1, is_month: 1, is_day: 1]
 
+  @option_keys [:url, :save, :path, :force, :encoding]
+
   @doc """
   Starts a holiday server.
 
@@ -32,7 +34,7 @@ defmodule JapaneseHoliday.Server do
   """
   @spec start_link(Keyword.t()) :: {:ok, pid()}
   def start_link(options \\ []) when is_list(options) do
-    {opts, gs_opts} = Keyword.split(options, [:url, :save, :path, :force, :encoding])
+    {opts, gs_opts} = Keyword.split(options, @option_keys)
     GenServer.start_link(__MODULE__, opts, gs_opts)
   end
 
@@ -72,19 +74,33 @@ defmodule JapaneseHoliday.Server do
     GenServer.call(pid, {:lookup, year, month, day})
   end
 
+  @doc """
+  Reloads holidays.
+
+  ## Options
+
+  - `options` - `JapaneseHoliday.load/1` options
+  """
+  # @spec reload(pid(), Keyword.t())
+  def reload(pid, options \\ []) when is_list(options) do
+    {opts, _} = Keyword.split(options, @option_keys)
+    GenServer.cast(pid, {:reload, opts})
+  end
+
   @impl true
   def init(options) do
     table = new_holidays_table()
 
-    Process.send_after(self(), :init_table, 0)
+    Process.send_after(self(), {:init_table, options}, 0)
 
     {:ok, %{table: table, options: options, loading: true, callers: []}}
   end
 
   @impl true
-  def handle_info(:init_table, state) do
-    {:ok, holidays} = JapaneseHoliday.load(state.options)
+  def handle_info({:init_table, options}, state) do
+    {:ok, holidays} = JapaneseHoliday.load(options)
 
+    :ets.delete_all_objects(state.table)
     Enum.each(holidays, &insert_holiday(state.table, &1))
 
     reply_to_collers(state)
@@ -95,20 +111,31 @@ defmodule JapaneseHoliday.Server do
   @impl true
   def handle_call({:lookup, year, month, day}, from, state) do
     if state.loading do
-      {:noreply, register_caller(state, from, year, month, day)}
+      {:noreply, register_caller(state, from, {year, month, day})}
     else
       {:reply, lookup_holidays(state.table, year, month, day), state}
     end
   end
 
-  defp register_caller(state, from, year, month, day) do
-    update_in(state, [:callers], &[{from, year, month, day} | &1])
+  @impl true
+  def handle_cast({:reload, options}, state) do
+    if state.loading do
+      {:noreply, state}
+    else
+      Process.send_after(self(), {:init_table, Keyword.merge(state.options, options)}, 0)
+      {:noreply, %{state | loading: true}}
+    end
+  end
+
+  defp register_caller(state, caller, args) do
+    update_in(state, [:callers], &[{caller, args} | &1])
   end
 
   defp reply_to_collers(state) do
     state.callers
-    |> Enum.each(fn {from, year, month, day} ->
-      GenServer.reply(from, lookup_holidays(state.table, year, month, day))
+    |> Enum.each(fn
+      {caller, {year, month, day}} ->
+        GenServer.reply(caller, lookup_holidays(state.table, year, month, day))
     end)
   end
 
