@@ -64,4 +64,20 @@ defmodule JapaneseHoliday.ServerTest do
       assert [] == JapaneseHoliday.Server.lookup(pid, 2023, 1, 3)
     end
   end
+
+  describe "reload/2" do
+    test "休日を再読み込みすること", %{pid: pid} do
+      reloaded_file = "test/fixtures/reloaded_holidays.csv"
+      expected_2023 = [{{2023, 1, 1}, "元日"}, {{2023, 1, 2}, "休日"}, {{2023, 1, 9}, "成人の日"}]
+      expected_2024 = [{{2024, 1, 1}, "元日"}, {{2024, 1, 8}, "成人の日"}]
+
+      assert expected_2023 == JapaneseHoliday.Server.lookup(pid, 2023, 1)
+      assert [] == JapaneseHoliday.Server.lookup(pid, 2024, 1)
+
+      :ok = JapaneseHoliday.Server.reload(pid, path: reloaded_file)
+
+      assert [] == JapaneseHoliday.Server.lookup(pid, 2023, 1)
+      assert expected_2024 == JapaneseHoliday.Server.lookup(pid, 2024, 1)
+    end
+  end
 end
