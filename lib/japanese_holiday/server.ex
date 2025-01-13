@@ -17,13 +17,33 @@ defmodule JapaneseHoliday.Server do
   JapaneseHoliday.Server.lookup(:holidays, 2023, 1, 1)
   #=> [{{2023, 1, 1}, "元日"}]
   ```
+
+  Or you can use it with supervisor.
+
+
+  ```elixir
+  defmodule MyApp.Application do
+    use Application
+
+    def start(_type, _args) do
+      children = [
+        {JapaneseHoliday.Server, name: MyApp.HolidayServer, path: "path/to/holidays.csv", save: true}
+      ]
+      opts = [strategy: :one_for_one, name: MyApp.Supervisor]
+      Supervisor.start_link(children, opts)
+    end
+  end
+  ```
+
+  ```elixir
+  JapaneseHoliday.Server.lookup(MyApp.HolidayServer, 2024)
+  ```
   """
 
   use GenServer
 
+  alias JapaneseHoliday.Options
   import JapaneseHoliday, only: [is_year: 1, is_month: 1, is_day: 1]
-
-  @option_keys [:url, :save, :path, :force, :encoding]
 
   @doc """
   Starts a holiday server.
@@ -34,7 +54,7 @@ defmodule JapaneseHoliday.Server do
   """
   @spec start_link(Keyword.t()) :: {:ok, pid()}
   def start_link(options \\ []) when is_list(options) do
-    {opts, gs_opts} = Keyword.split(options, @option_keys)
+    {opts, gs_opts} = Keyword.split(options, Options.keys())
     GenServer.start_link(__MODULE__, opts, gs_opts)
   end
 
@@ -83,7 +103,7 @@ defmodule JapaneseHoliday.Server do
   """
   # @spec reload(pid(), Keyword.t())
   def reload(pid, options \\ []) when is_list(options) do
-    {opts, _} = Keyword.split(options, @option_keys)
+    {opts, _} = Keyword.split(options, Options.keys())
     GenServer.cast(pid, {:reload, opts})
   end
 

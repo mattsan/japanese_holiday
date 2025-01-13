@@ -1,7 +1,7 @@
 defmodule JapaneseHoliday.StorageTest do
   use ExUnit.Case
   use JapaneseHolidayStab
-  alias JapaneseHoliday.{WebAPI, Storage}
+  alias JapaneseHoliday.{Storage, WebAPI}
   doctest Storage
 
   @url "https://example.com/syukujitsu.csv"
