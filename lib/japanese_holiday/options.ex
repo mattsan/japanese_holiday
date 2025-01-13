@@ -3,12 +3,12 @@ defmodule JapaneseHoliday.Options do
   Options struct
   """
 
-  defstruct [:url, :save?, :path, :force?, :encoding]
+  defstruct [:url, :path, :save?, :force?, :encoding]
 
   @type t() :: %__MODULE__{
           url: String.t(),
-          save?: boolean(),
           path: String.t() | nil,
+          save?: boolean(),
           force?: boolean(),
           encoding: String.t()
         }
@@ -38,7 +38,7 @@ defmodule JapaneseHoliday.Options do
   | `:force`    | `#{inspect(@default[:force])}`    |
   | `:encoding` | `#{inspect(@default[:encoding])}` |
 
-  ## Example
+  ## Examples
 
   ```elixir
   iex> JapaneseHoliday.Options.parse([])
@@ -46,8 +46,8 @@ defmodule JapaneseHoliday.Options do
     :ok,
     %JapaneseHoliday.Options{
       url: "https://www8.cao.go.jp/chosei/shukujitsu/syukujitsu.csv",
-      save?: false,
       path: nil,
+      save?: false,
       force?: false,
       encoding: "cp932"
     }
@@ -60,8 +60,8 @@ defmodule JapaneseHoliday.Options do
     :ok,
     %JapaneseHoliday.Options{
       url: "https://example.com/holidays.csv",
-      save?: false,
       path: nil,
+      save?: false,
       force?: true,
       encoding: "cp932"
     }
@@ -109,7 +109,9 @@ defmodule JapaneseHoliday.Options do
 
   @doc false
   @spec default(atom) :: map()
-  def default(key) when is_atom(key) do
-    @default[key]
-  end
+  def default(key) when is_atom(key), do: @default[key]
+
+  @doc false
+  @spec keys() :: [atom()]
+  def keys, do: [:url, :path, :save, :force, :encoding]
 end
