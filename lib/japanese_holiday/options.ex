@@ -17,26 +17,26 @@ defmodule JapaneseHoliday.Options do
           | {:path_must_be_string_if_to_save, [save: term(), path: term()]}
           | {:unknown_options, [term()]}
 
-  @default %{
+  @default [
     url: "https://www8.cao.go.jp/chosei/shukujitsu/syukujitsu.csv",
     path: nil,
-    save?: false,
-    force?: false,
+    save: false,
+    force: false,
     encoding: "cp932"
-  }
+  ]
 
   @doc """
   Parses a keyword list and returns an Options struct.
 
   ## Option keys
 
-  | key         | default |
-  |-------------|---|
-  | `:url`      | `#{inspect(@default.url)}` |
-  | `:path`     | `#{inspect(@default.path)}` |
-  | `:save`     | `#{inspect(@default.save?)}` |
-  | `:force`    | `#{inspect(@default.force?)}` |
-  | `:encoding` | `#{inspect(@default.encoding)}` |
+  | key         | default                           |
+  |-------------|-----------------------------------|
+  | `:url`      | `#{inspect(@default[:url])}`      |
+  | `:path`     | `#{inspect(@default[:path])}`     |
+  | `:save`     | `#{inspect(@default[:save])}`     |
+  | `:force`    | `#{inspect(@default[:force])}`    |
+  | `:encoding` | `#{inspect(@default[:encoding])}` |
 
   ## Example
 
@@ -72,28 +72,34 @@ defmodule JapaneseHoliday.Options do
   iex> JapaneseHoliday.Options.parse(save: true)
   {:error, {:path_must_be_string_if_to_save, [save: true, path: nil]}}
   ```
-
   """
   @spec parse(Keyword.t()) :: {:ok, t()} | {:error, error()}
   def parse(opts) do
     case Keyword.split(opts, [:url, :path, :save, :force, :encoding]) do
       {options, []} ->
-        url = Keyword.get(options, :url, @default.url)
-        path = Keyword.get(options, :path, @default.path)
-        save? = Keyword.get(options, :save, @default.save?)
-        force? = Keyword.get(options, :force, @default.force?)
-        encoding = Keyword.get(options, :encoding, @default.encoding)
+        options = Keyword.merge(@default, options)
 
         cond do
-          !is_binary(url) ->
-            {:error, {:url_must_be_string, [url: url]}}
+          !is_binary(options[:url]) ->
+            {:error, {:url_must_be_string, [url: options[:url]]}}
 
-          save? && !is_binary(path) ->
-            {:error, {:path_must_be_string_if_to_save, [save: save?, path: path]}}
+          options[:save] && !is_binary(options[:path]) ->
+            {
+              :error,
+              {:path_must_be_string_if_to_save, [save: options[:save], path: options[:path]]}
+            }
 
           true ->
-            {:ok,
-             %__MODULE__{url: url, path: path, save?: save?, force?: force?, encoding: encoding}}
+            {
+              :ok,
+              %__MODULE__{
+                url: options[:url],
+                path: options[:path],
+                save?: options[:save],
+                force?: options[:force],
+                encoding: options[:encoding]
+              }
+            }
         end
 
       {_, unknowns} ->
@@ -102,8 +108,8 @@ defmodule JapaneseHoliday.Options do
   end
 
   @doc false
-  @spec default() :: map()
-  def default do
-    @default
+  @spec default(atom) :: map()
+  def default(key) when is_atom(key) do
+    @default[key]
   end
 end
