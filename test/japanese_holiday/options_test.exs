@@ -109,5 +109,15 @@ defmodule JapaneseHoliday.OptionsTest do
 
       assert expected == Options.parse(encoding: "utf8")
     end
+
+    test "不明なオプションを指定した場合、エラーを返すこと" do
+      expected =
+        {
+          :error,
+          {:unknown_options, [:foo, :bar]}
+        }
+
+      assert expected == Options.parse(foo: "foo", bar: 123)
+    end
   end
 end

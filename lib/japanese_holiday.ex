@@ -41,11 +41,11 @@ defmodule JapaneseHoliday do
 
   ## Options
 
-  - `:url` - URL of CSV of holidays. (default: [`#{Options.default().url}`](#{Options.default().url}))
-  - `:save` - If `true` save the downloaded CSV data. (default: `#{Options.default().save?}`)
-  - `:path` - Path to save or load the downloaded CSV data. If `:save` is `true`, this options is required.
-  - `:force` - If `true` force download the CSV data. (default: `#{Options.default().force?}`)
-  - `:encoding` - Encoding of the CSV data to download. (default: `"#{Options.default().encoding}"`)
+  - `:url` - URL of CSV of holidays. (default: `#{inspect(Options.default().url)}`)
+  - `:save` - If `true` save the downloaded CSV data. (default: `#{inspect(Options.default().save?)}`)
+  - `:path` - Path to save or load the downloaded CSV data. If `:save` is `true`, this options is required. (default: `#{inspect(Options.default().path)}`)
+  - `:force` - If `true` force download the CSV data. (default: `#{inspect(Options.default().force?)}`)
+  - `:encoding` - Encoding of the CSV data to download. (default: `#{inspect(Options.default().encoding)}`)
   """
   @spec load(Keyword.t()) :: {:ok, [holiday()]} | {:error, error()}
   def load(opts \\ []) when is_list(opts) do
