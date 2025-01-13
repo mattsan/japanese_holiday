@@ -3,7 +3,7 @@ defmodule JapaneseHoliday.Storage do
   Storage of CVS data.
   """
 
-  alias JapaneseHoliday.WebAPI
+  alias JapaneseHoliday.{Options, WebAPI}
   require Logger
 
   @doc """
@@ -13,7 +13,7 @@ defmodule JapaneseHoliday.Storage do
   """
   @spec load(Keyword.t()) :: {:ok, String.t()} | {:error, JapaneseHoliday.error()}
   def load(opts) when is_list(opts) do
-    case parse_options(opts) do
+    case Options.parse(opts) do
       {:ok, options} ->
         if !options.force? && is_binary(options.path) && File.exists?(options.path) do
           register_log(:loading, options.path)
@@ -25,28 +25,8 @@ defmodule JapaneseHoliday.Storage do
           |> save(options.path, options.save?)
         end
 
-      error ->
+      {:error, _} = error ->
         error
-    end
-  end
-
-  @spec parse_options(Keyword.t()) :: {:ok, map()} | {:error, JapaneseHoliday.option_error()}
-  defp parse_options(opts) do
-    url = opts[:url]
-    path = opts[:path]
-    save? = Keyword.get(opts, :save, false)
-    force? = Keyword.get(opts, :force, false)
-    encoding = Keyword.get(opts, :encoding, "utf-8")
-
-    cond do
-      !is_binary(url) ->
-        {:error, {:url_must_be_string, url}}
-
-      save? && !is_binary(path) ->
-        {:error, {:path_must_be_string_if_to_save, [save: save?, path: path]}}
-
-      true ->
-        {:ok, %{url: url, path: path, save?: save?, force?: force?, encoding: encoding}}
     end
   end
 

@@ -20,22 +20,17 @@ defmodule JapaneseHoliday do
   ```
   """
 
-  alias JapaneseHoliday.{Parser, Storage, WebAPI}
+  alias JapaneseHoliday.{Options, Parser, Storage, WebAPI}
 
   NimbleCSV.define(JapaneseHoliday.Parser, moduledoc: false)
-
-  @url "https://www8.cao.go.jp/chosei/shukujitsu/syukujitsu.csv"
-  @default_options [url: @url, encoding: "cp932"]
 
   @type year :: 1955..9999
   @type month :: 1..12
   @type day :: 1..31
   @type date :: {year(), month(), day()}
   @type holiday :: {date(), String.t()}
-  @type option_error() ::
-          {:url_must_be_string, term()} | {:path_must_be_string_if_to_save, term()}
   @type file_error() :: File.posix()
-  @type error() :: option_error() | file_error() | WebAPI.error()
+  @type error() :: Options.error() | file_error() | WebAPI.error()
 
   defguard is_year(term) when term in 1955..9999
   defguard is_month(term) when term in 1..12
@@ -46,20 +41,17 @@ defmodule JapaneseHoliday do
 
   ## Options
 
-  - `:url` - URL of CSV of holidays. (default: [`#{@url}`](#{@url}))
-  - `:save` - If `true` save the downloaded CSV data. (default: `false`)
+  - `:url` - URL of CSV of holidays. (default: [`#{Options.default().url}`](#{Options.default().url}))
+  - `:save` - If `true` save the downloaded CSV data. (default: `#{Options.default().save?}`)
   - `:path` - Path to save or load the downloaded CSV data. If `:save` is `true`, this options is required.
-  - `:force` - If `true` force download the CSV data. (default: `false`)
-  - `:encoding` - Encoding of the CSV data to download. (default: `"cp932"`)
+  - `:force` - If `true` force download the CSV data. (default: `#{Options.default().force?}`)
+  - `:encoding` - Encoding of the CSV data to download. (default: `"#{Options.default().encoding}"`)
   """
   @spec load(Keyword.t()) :: {:ok, [holiday()]} | {:error, error()}
   def load(opts \\ []) when is_list(opts) do
-    case @default_options |> Keyword.merge(opts) |> Storage.load() do
-      {:ok, csv} ->
-        {:ok, parse(csv)}
-
-      error ->
-        error
+    case Storage.load(opts) do
+      {:ok, csv} -> {:ok, parse(csv)}
+      {:error, _} = error -> error
     end
   end
 
